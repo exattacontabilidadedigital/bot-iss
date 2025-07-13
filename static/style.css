@@ -1,0 +1,105 @@
+:root {
+    --exatta-dark-blue: #061440;
+    --exatta-red: #e73030;
+}
+body {
+    background: #f8f9fa;
+    margin-left: 0;
+    margin-right: 0;
+    padding: 0;
+}
+.navbar-exatta {
+    background-color: var(--exatta-dark-blue);
+    padding: 15px 30px;
+}
+.nav-link {
+    color: white !important;
+    margin-right: 20px;
+    font-weight: 500;
+}
+.nav-link.active {
+    color: var(--exatta-red) !important;
+}
+h1 {
+    margin-bottom: 30px;
+    font-size: 28px;
+    font-weight: 500;
+    color: #333;
+}
+.actions-btn {
+    background-color: var(--exatta-dark-blue);
+    color: white;
+    border: none;
+    padding: 8px 40px;
+    border-radius: 5px;
+    height: 45px !important;
+    line-height: 30px;
+}
+.filter-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+.filter-select {
+    width: 200px;
+    border-radius: 5px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    
+}
+.table {
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    
+    
+}
+.table th {
+    background-color: #f8f9fa;
+    color: #333;
+    font-weight: 500;
+    border-bottom: 1px solid #ddd;
+    
+}
+.badge.bg-danger {
+    background-color: #ffebee !important;
+    color: #f44336 !important;
+}
+.badge.bg-success {
+    background-color: #e8f5e9 !important;
+    color: #4caf50 !important;
+}
+.badge.bg-warning {
+    background-color: #fff8e1 !important;
+    color: #ff9800 !important;
+}
+.action-icon {
+    color: #888;
+    cursor: pointer;
+}
+.logo-text {
+    color: white;
+    font-weight: bold;
+    font-size: 24px;
+}
+.logo-text span {
+    color: var(--exatta-red);
+}
+.progress {
+    height: 10px;
+    border-radius: 5px;
+    margin-top: 5px;
+}
+.progress-bar {
+    background-color: var(--exatta-dark-blue);
+}
+.btn-spinner {
+    display: none;
+}
+
+.teste {
+    margin-left: 40px;
+    margin-right: 40px;
+}

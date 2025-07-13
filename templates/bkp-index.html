@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Exatta Contabilidade Digital</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --exatta-dark-blue: #061440;
+            --exatta-red: #e73030;
+        }
+        body {
+            background: #f8f9fa;
+            margin: 0;
+            padding: 0;
+        }
+        .navbar-exatta {
+            background-color: var(--exatta-dark-blue);
+            padding: 15px 30px;
+        }
+        .nav-link {
+            color: white !important;
+            margin-right: 20px;
+            font-weight: 500;
+        }
+        .nav-link.active {
+            color: var(--exatta-red) !important;
+        }
+        h1 {
+            margin-bottom: 30px;
+            font-size: 28px;
+            font-weight: 500;
+            color: #333;
+        }
+        .actions-btn {
+            background-color: var(--exatta-dark-blue);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 5px;
+        }
+        .filter-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .filter-select {
+            width: 200px;
+            border-radius: 5px;
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+        .table {
+            border-collapse: separate;
+            border-spacing: 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .table th {
+            background-color: #f8f9fa;
+            color: #333;
+            font-weight: 500;
+            border-bottom: 1px solid #ddd;
+        }
+        .badge.bg-danger {
+            background-color: #ffebee !important;
+            color: #f44336 !important;
+        }
+        .badge.bg-success {
+            background-color: #e8f5e9 !important;
+            color: #4caf50 !important;
+        }
+        .action-icon {
+            color: #888;
+        }
+        .logo-text {
+            color: white;
+            font-weight: bold;
+            font-size: 24px;
+        }
+        .logo-text span {
+            color: var(--exatta-red);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand navbar-exatta">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand" href="#">
+                <div class="logo-text"><span>e</span>xatta</div>
+                <div style="font-size: 12px; color: #ccc; margin-top: -5px;">Contabilidade Digital</div>
+            </a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Emitir Nota</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#">Fechamento</a>
+                    </li>
+                </ul>
+            </div>
+            <div>
+                <a href="#" class="text-white me-3"><i class="far fa-heart"></i></a>
+                <a href="#" class="text-white me-3"><i class="far fa-bell"></i></a>
+                <a href="#" class="text-white me-3"><i class="far fa-question-circle"></i></a>
+                <a href="#" class="text-white"><i class="fas fa-user-circle"></i></a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Conteúdo -->
+    <div class="container-fluid mt-4">
+        <h1>Fechamento</h1>
+
+        <div class="d-flex justify-content-between mb-4">
+            <button class="actions-btn">
+                <i class="fas fa-pencil-alt me-2"></i> Ações
+            </button>
+
+            <form method="get" id="filtros-form">
+                <div class="filter-container">
+                    <div>
+                        <select class="form-select filter-select" name="empresa" onchange="this.form.submit()">
+                            <option value="">Todas</option>
+                            {% for empresa_nome in lista_empresas %}
+                                <option value="{{ empresa_nome }}" {% if request.args.get('empresa') == empresa_nome %}selected{% endif %}>{{ empresa_nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <select class="form-select filter-select" name="debito" onchange="this.form.submit()">
+                            <option value="">Débito</option>
+                            <option value="Sim" {% if request.args.get('debito')=='Sim' %}selected{% endif %}>Sim</option>
+                            <option value="Não" {% if request.args.get('debito')=='Não' %}selected{% endif %}>Não</option>
+                        </select>
+                    </div>
+                    <div>
+                        <select class="form-select filter-select" name="omisso" onchange="this.form.submit()">
+                            <option value="">Omissão</option>
+                            <option value="Sim" {% if request.args.get('omisso')=='Sim' %}selected{% endif %}>Sim</option>
+                            <option value="Não" {% if request.args.get('omisso')=='Não' %}selected{% endif %}>Não</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tabela -->
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="selectAll">
+                                <label class="form-check-label" for="selectAll">Selecionar</label>
+                            </div>
+                        </th>
+                        <th>Empresa</th>
+                        <th>CNPJ</th>
+                        <th>Débito</th>
+                        <th>Omissão</th>
+                        <th style="width: 80px;">Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cnpj, nome, omisso, debito in empresas %}
+                        <tr>
+                            <td><input class="form-check-input" type="checkbox"></td>
+                            <td>{{ nome }}</td>
+                            <td>{{ cnpj }}</td>
+                            <td>
+                                {% if debito == 'Sim' %}
+                                    <span class="badge bg-danger">sim</span>
+                                {% else %}
+                                    <span class="badge bg-success">não</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if omisso == 'Sim' %}
+                                    <span class="badge bg-danger">sim</span>
+                                {% else %}
+                                    <span class="badge bg-success">não</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <a href="#" class="action-icon" onclick="abrirModal('{{ cnpj }}')">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">Nenhum registro encontrado.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="encerramentoModal" tabindex="-1" aria-labelledby="encerramentoModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="encerramentoModalLabel">Encerrar Movimento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="encerramentoForm">
+                        <input type="hidden" id="cnpjEmpresa" name="cnpj">
+                        <div class="mb-3">
+                            <label for="periodoInicial" class="form-label">Período Inicial (mm/aaaa)</label>
+                            <input type="text" class="form-control" id="periodoInicial" name="periodo_inicial" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="periodoFinal" class="form-label">Período Final (mm/aaaa)</label>
+                            <input type="text" class="form-control" id="periodoFinal" name="periodo_final" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Encerrar Movimento</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle com Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Socket.IO (versão cliente) -->
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script>
+        const socket = io(); // conecta automaticamente no mesmo servidor
+
+        socket.on('connect', () => {
+            console.log('Conectado ao servidor Socket.IO');
+        });
+
+        socket.on('encerramento_concluido', (data) => {
+            alert(data.message);
+            location.reload();
+        });
+
+        function abrirModal(cnpj) {
+            document.getElementById('cnpjEmpresa').value = cnpj;
+            new bootstrap.Modal(document.getElementById('encerramentoModal')).show();
+        };
+
+        document.getElementById('encerramentoForm').addEventListener('submit', function(e) {
+            e.preventDefault();  // Impede o envio padrão do formulário
+
+            const formData = new FormData(this);  // Coleta os dados do formulário
+            const cnpj = formData.get('cnpj');
+            const periodo_inicial = formData.get('periodo_inicial');
+            const periodo_final = formData.get('periodo_final');
+
+            // Adicione este console.log para verificar os dados
+            console.log('Dados enviados para o backend:', {
+                cnpj,
+                periodo_inicial,
+                periodo_final
+            });
+
+
+            // Envia os dados via POST para a URL '/encerrar'
+            fetch('/encerrar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    cnpj: cnpj,
+                    periodo_inicial: periodo_inicial,
+                    periodo_final: periodo_final
+                })
+            })
+            .then(data => {
+                console.log('Resposta do backend:', data);
+                if (data.message) {
+                    socket.emit('atualizar_status', data); // Notifica via WebSocket
+                    alert('Processo iniciado com sucesso!');
+                    bootstrap.Modal.getInstance(document.getElementById('encerramentoModal')).hide();
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao processar: ' + error.message);
+            });
+        });
+
+        
+    </script>
+</body>
+</html>
+
+
+<!--  versão 22 !>-->
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Exatta Contabilidade Digital</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --exatta-dark-blue: #061440;
+            --exatta-red: #e73030;
+        }
+        body {
+            background: #f8f9fa;
+            margin: 0;
+            padding: 0;
+        }
+        .navbar-exatta {
+            background-color: var(--exatta-dark-blue);
+            padding: 15px 30px;
+        }
+        .nav-link {
+            color: white !important;
+            margin-right: 20px;
+            font-weight: 500;
+        }
+        .nav-link.active {
+            color: var(--exatta-red) !important;
+        }
+        h1 {
+            margin-bottom: 30px;
+            font-size: 28px;
+            font-weight: 500;
+            color: #333;
+        }
+        .actions-btn {
+            background-color: var(--exatta-dark-blue);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 5px;
+        }
+        .filter-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .filter-select {
+            width: 200px;
+            border-radius: 5px;
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+        .table {
+            border-collapse: separate;
+            border-spacing: 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .table th {
+            background-color: #f8f9fa;
+            color: #333;
+            font-weight: 500;
+            border-bottom: 1px solid #ddd;
+        }
+        .badge.bg-danger {
+            background-color: #ffebee !important;
+            color: #f44336 !important;
+        }
+        .badge.bg-success {
+            background-color: #e8f5e9 !important;
+            color: #4caf50 !important;
+        }
+        .badge.bg-warning {
+            background-color: #fff8e1 !important;
+            color: #ff9800 !important;
+        }
+        .action-icon {
+            color: #888;
+            cursor: pointer;
+        }
+        .logo-text {
+            color: white;
+            font-weight: bold;
+            font-size: 24px;
+        }
+        .logo-text span {
+            color: var(--exatta-red);
+        }
+        .progress {
+            height: 10px;
+            border-radius: 5px;
+            margin-top: 5px;
+        }
+        .progress-bar {
+            background-color: var(--exatta-dark-blue);
+        }
+        .btn-spinner {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand navbar-exatta">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand" href="#">
+               
+                <div class="logo-text"><span>e</span>xatta</div>
+                <div style="font-size: 12px; color: #ccc; margin-top: -5px;">Contabilidade Digital</div>
+            </a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Emitir Nota</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#">Fechamento</a>
+                    </li>
+                </ul>
+            </div>
+            <div>
+                <a href="#" class="text-white me-3"><i class="far fa-heart"></i></a>
+                <a href="#" class="text-white me-3"><i class="far fa-bell"></i></a>
+                <a href="#" class="text-white me-3"><i class="far fa-question-circle"></i></a>
+                <a href="#" class="text-white"><i class="fas fa-user-circle"></i></a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Conteúdo -->
+    <div class="container-fluid mt-4">
+        <h1>Fechamento</h1>
+        <div class="d-flex justify-content-between mb-4">
+            <button class="actions-btn">
+                <i class="fas fa-pencil-alt me-2"></i> Ações
+            </button>
+
+            <form method="get" id="filtros-form">
+                <div class="filter-container">
+                    <div>
+                        <select class="form-select filter-select" name="empresa" onchange="this.form.submit()">
+                            <option value="">Todas</option>
+                            {% for empresa_nome in lista_empresas %}
+                                <option value="{{ empresa_nome }}" {% if request.args.get('empresa') == empresa_nome %}selected{% endif %}>{{ empresa_nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <select class="form-select filter-select" name="debito" onchange="this.form.submit()">
+                            <option value="">Débito</option>
+                            <option value="Sim" {% if request.args.get('debito')=='Sim' %}selected{% endif %}>Sim</option>
+                            <option value="Não" {% if request.args.get('debito')=='Não' %}selected{% endif %}>Não</option>
+                        </select>
+                    </div>
+                    <div>
+                        <select class="form-select filter-select" name="omisso" onchange="this.form.submit()">
+                            <option value="">Omissão</option>
+                            <option value="Sim" {% if request.args.get('omisso')=='Sim' %}selected{% endif %}>Sim</option>
+                            <option value="Não" {% if request.args.get('omisso')=='Não' %}selected{% endif %}>Não</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tabela -->
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="selectAll">
+                                <label class="form-check-label" for="selectAll">Selecionar</label>
+                            </div>
+                        </th>
+                        <th>Empresa</th>
+                        <th>CNPJ</th>
+                        <th>Débito</th>
+                        <th>Omissão</th>
+                        <th>Status</th>
+                        <th style="width: 80px;">Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for empresa in empresas %}
+                        <tr data-cnpj="{{ empresa.cnpj }}">
+                            <td><input class="form-check-input" type="checkbox"></td>
+                            <td>{{ empresa.nome }}</td>
+                            <td>{{ empresa.cnpj }}</td>
+                            <td>
+                                {% if empresa.debito == 'Sim' %}
+                                    <span class="badge bg-danger">sim</span>
+                                {% else %}
+                                    <span class="badge bg-success">não</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if empresa.omisso == 'Sim' %}
+                                    <span class="badge bg-danger">sim</span>
+                                {% else %}
+                                    <span class="badge bg-success">não</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if empresa.status %}
+                                    <div class="d-flex flex-column">
+                                        <span class="badge bg-{{ 'success' if empresa.status == 'concluido' else 'warning' if empresa.status == 'em_processo' else 'secondary' }}">
+                                            {{ empresa.status }}
+                                        </span>
+                                        {% if empresa.status == 'em_processo' %}
+                                            <div class="progress">
+                                                <div class="progress-bar" role="progressbar" style="width: {{ empresa.progresso }} %" aria-valuenow="{{ empresa.progresso }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                {% else %}
+                                    <span class="badge bg-secondary">pendente</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <a href="#" class="action-icon" data-cnpj="{{ empresa.cnpj }}" onclick="abrirModal(this)">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">Nenhum registro encontrado.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal de Encerramento de Movimento -->
+    <div class="modal fade" id="encerramentoModal" tabindex="-1" aria-labelledby="encerramentoModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="encerramentoModalLabel">Encerrar Movimento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="encerramentoForm">
+                        <input type="hidden" id="cnpjEmpresa" name="cnpj">
+                        
+                        <!-- Período Inicial -->
+                        <div class="mb-3">
+                            <label for="periodoInicial" class="form-label">Período Inicial (mm/aaaa)</label>
+                            <input type="text" class="form-control" id="periodoInicial" name="periodo_inicial" required maxlength="7" placeholder="MM/AAAA">
+                            <div class="invalid-feedback">Formato inválido. Use MM/AAAA</div>
+                        </div>
+                        
+                        <!-- Período Final -->
+                        <div class="mb-3">
+                            <label for="periodoFinal" class="form-label">Período Final (mm/aaaa)</label>
+                            <input type="text" class="form-control" id="periodoFinal" name="periodo_final" required maxlength="7" placeholder="MM/AAAA">
+                            <div class="invalid-feedback">Formato inválido. Use MM/AAAA</div>
+                        </div>
+                        
+                        <!-- Seleção do Tipo de Serviço -->
+                        <div class="mb-3">
+                            <label>Tipo de Serviço:</label><br>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="bot_path" id="servicosTomados" value="bots/bot1.py" checked>
+                                <label class="form-check-label" for="servicosTomados">
+                                    Serviços Tomados
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="bot_path" id="servicosPrestados" value="bots/bot2.py">
+                                <label class="form-check-label" for="servicosPrestados">
+                                    Serviços Prestados
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Botão de Envio com Spinner -->
+                        <button type="submit" class="btn btn-primary" id="submitButton">
+                            <span class="btn-text">Encerrar Movimento</span>
+                            <span class="spinner-border spinner-border-sm btn-spinner" role="status" aria-hidden="true" style="display: none;"></span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle com Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Socket.IO (versão cliente) -->
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script>
+        // Formatação de campos de período
+        function formatarPeriodo(input) {
+            input.addEventListener('input', function() {
+                let valor = this.value.replace(/\D/g, '');
+                if (valor.length > 2) {
+                    valor = valor.substring(0, 2) + '/' + valor.substring(2, 6);
+                }
+                this.value = valor;
+            });
+        }
+
+        // Aplicar formatação aos campos
+        document.addEventListener('DOMContentLoaded', function() {
+            formatarPeriodo(document.getElementById('periodoInicial'));
+            formatarPeriodo(document.getElementById('periodoFinal'));
+        });
+
+        // Conexão Socket.IO
+        const socket = io();
+
+        socket.on('connect', () => {
+            console.log('Conectado ao servidor Socket.IO');
+        });
+
+        socket.on('encerramento_concluido', (data) => {
+            console.log('Recebido evento de encerramento concluído:', data);
+            alert(`Encerramento concluído para CNPJ: ${data.cnpj}`);
+            location.reload();
+        });
+
+        socket.on('atualizacao_status', (data) => {
+            console.log('Recebido atualização de status:', data);
+            const row = document.querySelector(`tr[data-cnpj="${data.cnpj}"]`);
+            if (row) {
+                const statusCell = row.querySelector('td:nth-child(6)');
+                if (statusCell) {
+                    statusCell.innerHTML = `
+                        <div class="d-flex flex-column">
+                            <span class="badge bg-warning">${data.status}</span>
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" style="width: ${data.progresso}%" 
+                                     aria-valuenow="${data.progresso}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+        });
+
+        function abrirModal(element) {
+            const cnpj = element.getAttribute('data-cnpj');
+            document.getElementById('cnpjEmpresa').value = cnpj;
+            
+            // Limpar campos
+            document.getElementById('periodoInicial').value = '';
+            document.getElementById('periodoFinal').value = '';
+            
+            // Remover validações anteriores
+            document.getElementById('encerramentoForm').classList.remove('was-validated');
+            
+            new bootstrap.Modal(document.getElementById('encerramentoModal')).show();
+        }
+
+        document.getElementById('encerramentoForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Validação básica
+            const form = this;
+            if (!form.checkValidity()) {
+                form.classList.add('was-validated');
+                return;
+            }
+
+            const formData = new FormData(form);
+            const cnpj = formData.get('cnpj');
+            let periodo_inicial = formData.get('periodo_inicial').replace('/', '');
+            let periodo_final = formData.get('periodo_final').replace('/', '');
+
+            // Validação de formato
+            if (!/^\d{6}$/.test(periodo_inicial) || !/^\d{6}$/.test(periodo_final)) {
+                alert('Formato de período inválido. Use MM/AAAA');
+                return;
+            }
+
+            // Mostrar spinner
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.querySelector('.btn-text').style.display = 'none';
+            submitBtn.querySelector('.btn-spinner').style.display = 'inline-block';
+
+            // Log para depuração
+            console.log('Dados enviados para o backend:', {
+                cnpj,
+                periodo_inicial,
+                periodo_final
+            });
+
+            // Envia os dados via POST
+            fetch('/encerrar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    cnpj: cnpj,
+                    periodo_inicial: periodo_inicial,
+                    periodo_final: periodo_final
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Resposta do backend:', data);
+                if (data.message) {
+                    alert('Processo iniciado com sucesso!');
+                    bootstrap.Modal.getInstance(document.getElementById('encerramentoModal')).hide();
+                    
+                    // Atualizar a linha da tabela
+                    const row = document.querySelector(`tr[data-cnpj="${cnpj}"]`);
+                    if (row) {
+                        const statusCell = row.querySelector('td:nth-child(6)');
+                        if (statusCell) {
+                            statusCell.innerHTML = `
+                                <div class="d-flex flex-column">
+                                    <span class="badge bg-warning">em_processo</span>
+                                    <div class="progress">
+                                        <div class="progress-bar" role="progressbar" style="width: 0%" 
+                                            aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    }
+                }
+            })
+            .catch(async error => {
+                let msg = error.message;
+                try {
+                    const resp = await error.response.json();
+                    if (resp.error) msg += ' - ' + resp.error;
+                } catch {}
+                alert('Erro ao processar: ' + msg);
+            })
+
+            .finally(() => {
+                // Esconder spinner
+                submitBtn.disabled = false;
+                submitBtn.querySelector('.btn-text').style.display = 'inline';
+                submitBtn.querySelector('.btn-spinner').style.display = 'none';
+            });
+        });
+
+        // Seleção de todos os checkboxes
+        document.getElementById('selectAll').addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('tbody .form-check-input');
+            for (let checkbox of checkboxes) {
+                checkbox.checked = this.checked;
+            }
+        });
+    </script>
+</body>
+</html>
+
